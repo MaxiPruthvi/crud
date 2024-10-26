@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee CRUD Application</title>
+    <style>
+        /* Reset and Base Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6d83f2, #9b51e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #444;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            padding: 30px 40px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #9b51e0;
+            box-shadow: 0 0 6px rgba(155, 81, 224, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #6d83f2, #9b51e0);
+            box-shadow: 0 6px 12px rgba(155, 81, 224, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #5b72d7, #8a3cbf);
+            box-shadow: 0 8px 16px rgba(90, 60, 180, 0.3);
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        li:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .actions button {
+            padding: 8px 12px;
+            background-color: #6d83f2;
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            box-shadow: 0 4px 8px rgba(109, 131, 242, 0.2);
+        }
+
+        .actions button:hover {
+            background-color: #5b72d7;
+            box-shadow: 0 6px 12px rgba(90, 60, 180, 0.2);
+        }
+
+        .actions button:last-child {
+            background-color: #e05353;
+        }
+
+        .actions button:last-child:hover {
+            background-color: #d04343;
+            box-shadow: 0 6px 12px rgba(208, 67, 67, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Management</h1>
+        <input type="text" id="name" placeholder="Employee Name" required>
+        <input type="text" id="role" placeholder="Role" required>
+        <input type="text" id="country" placeholder="Country" required>
+        <input type="text" id="department" placeholder="Department" required>
+        <button id="create-employee">Create Employee</button>
+
+        <ul id="employee-list"></ul>
+    </div>
+
+    <script>
+        document.getElementById('create-employee').addEventListener('click', function() {
+            const name = document.getElementById('name').value;
+            const role = document.getElementById('role').value;
+            const country = document.getElementById('country').value;
+            const department = document.getElementById('department').value;
+
+            const data = { name, role, country, department };
+
+            fetch('/employees', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Employee added successfully!');
+                    loadEmployees(); // Reload employee list
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+
+        function loadEmployees() {
+            fetch('/employees')
+                .then(response => response.json())
+                .then(employees => {
+                    const employeeList = document.getElementById('employee-list');
+                    employeeList.innerHTML = ''; // Clear the list
+                    employees.forEach(emp => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${emp[1]} - ${emp[2]} - ${emp[3]} - ${emp[4]} 
+                            <div class="actions">
+                                <button onclick="editEmployee(${emp[0]})">Edit</button>
+                                <button onclick="deleteEmployee(${emp[0]})">Delete</button>
+                            </div>`;
+                        employeeList.appendChild(li);
+                    });
+                });
+        }
+
+        function deleteEmployee(id) {
+            fetch(`/employees/${id}`, {
+                method: 'DELETE',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'deleted') {
+                    alert('Employee deleted successfully!');
+                    loadEmployees(); // Reload employee list
+                }
+            });
+        }
+
+        function editEmployee(id) {
+            const name = prompt('Enter new name:');
+            const role = prompt('Enter new role:');
+            const country = prompt('Enter new country:');
+            const department = prompt('Enter new department:');
+
+            const data = { name, role, country, department };
+
+            fetch(`/employees/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Employee updated successfully!');
+                    loadEmployees(); // Reload employee list
+                }
+            });
+        }
+
+        // Load employees on page load
+        loadEmployees();
+    </script>
+</body>
+</html>
